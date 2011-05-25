@@ -3,15 +3,22 @@
 					   xmlns:s="library://ns.adobe.com/flex/spark"
 					   xmlns:mx="library://ns.adobe.com/flex/mx"
 					   width="640"
-					   height="480" creationComplete="init()">
+					   height="480"
+					   creationComplete="init()">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<s:WebService result="ip_resultHandler(event)"
+					  fault="ip_faultHandler(event)"
+					  wsdl="http://webservice.webxml.com.cn/WebServices/IpAddressSearchWebService.asmx?wsdl"
+					  id="ip"/>
+
 	</fx:Declarations>
 
 	<fx:Script>
 		<![CDATA[
 			//http://code.google.com/intl/zh-CN/apis/maps/documentation/flash/tutorial-flexbuilder.html
-			//地址转换经纬度http://www.ibm.com/developerworks/cn/web/wa-lo-flexgoogle/
+			//地址转换经纬度 http://www.ibm.com/developerworks/cn/web/wa-lo-flexgoogle/
+			//使用Google Map API(FLASH)在地图中显示你的位置 http://l4cd.net/blog/post-show-your-location-in-the-google-map-by-flash.html
 
 			import com.google.maps.InfoWindowOptions;
 			import com.google.maps.LatLng;
@@ -21,29 +28,37 @@
 			import com.google.maps.controls.*;
 			import com.google.maps.overlays.*;
 			import com.google.maps.services.*;
-			
+
 			import mx.controls.Alert;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 
 			//private var searchPlace:String="回龙观";//for test
 			private var placeInfo:String="";
-
+			private var here:String;
+			private var cgo:ClientGeocoderOptions=new ClientGeocoderOptions({language: 'zh', countryCode: 'CN'});
+			private var geocoder:ClientGeocoder; //先创建ClientGeocoder实例
 
 			private function init():void
 			{
-				panel.x = 10;
-				panel.y = map.height + 10;
+				panel.x=10;
+				panel.y=map.height + 10;
+
+				searchBtn.addEventListener(MouseEvent.CLICK, searchHandler); //搜索
+				this.nativeWindow.addEventListener(Event.RESIZE, resizeHandler); //监听全屏变化
 				
-				searchBtn.addEventListener(MouseEvent.CLICK, searchHandler);
-				
-				this.nativeWindow.addEventListener(Event.RESIZE, resizeHandler);//监听全屏变化
+				ip.getGeoIPContext();
 			}
-			
-			private function onMapReady(event:Event):void
+
+			private function onMapReady(event:Event):void //设置界面
 			{
-				//this.map.setCenter(new LatLng(40.736072, -73.992062), 14, MapType.NORMAL_MAP_TYPE);//new york 
-				//this.map.setCenter(new LatLng(31, 121), 9, MapType.NORMAL_MAP_TYPE); //shanghai
-				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing
-				//map.openInfoWindow(map.getCenter(), new InfoWindowOptions({title: "Hello", content: "World"}));
+				geocoder = new ClientGeocoder(cgo);
+				geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocodingSuccess);
+				geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocodingFailure);
+				
+				//(40.736072, -73.992062)new york 
+				//(31, 121)shanghai
+				//map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing 经纬度定位
 
 				map.addControl(new PositionControl(new PositionControlOptions())); //显示一个方向的按钮,用来移动地图 
 				map.addControl(new OverviewMapControl(new OverviewMapControlOptions())); //显示一个地图的缩略图 
@@ -54,23 +69,35 @@
 				map.enableContinuousZoom();
 			}
 
-			private function searchHandler(event:MouseEvent):void
+
+
+			//ip
+			private function ip_resultHandler(event:ResultEvent):void
 			{
-				var cgo:ClientGeocoderOptions=new ClientGeocoderOptions({language: 'zh', countryCode: 'CN'});
-				
-				//先创建ClientGeocoder实例
-				var geocoder:ClientGeocoder=new ClientGeocoder(cgo);
-				//注册地址转换成功事件的listener
-				geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocodingSuccess);
-				//注册地址转换失败事件的listener
-				geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocodingFailure);
-				//发送地址转换请求
-				geocoder.geocode(searchInput.text);
-				
-				
+				here=event.result[1];
+				//trace("here = "+here);//here = 北京市 联通ADSL
+				geocoder.geocode(here);
+				map.setZoom(12);
 			}
 
+			private function ip_faultHandler(event:FaultEvent):void
+			{
+				Alert.show("获取地理位置失败");
+				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing 经纬度定位
+			}
 
+			// //ip
+
+
+			//search & mark
+			private function searchHandler(event:MouseEvent):void //搜索
+			{
+				/*
+				geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocodingSuccess);
+				geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocodingFailure);
+				*/
+				geocoder.geocode(searchInput.text); //发送地址转换请求
+			}
 
 			private function geocodingSuccess(event:GeocodingEvent):void
 			{
@@ -85,6 +112,11 @@
 					map.setCenter(placemark.point);
 					createMarker(placemark.point, event.response.placemarks[0].address);
 				}
+			}
+
+			private function geocodingFailure(event:GeocodingEvent):void
+			{
+				Alert.show("Conversion fails");
 			}
 
 			private function createMarker(point:LatLng, city:String):void
@@ -102,35 +134,26 @@
 				info(point);
 			}
 
-			private function geocodingFailure(event:GeocodingEvent):void
-			{
-				Alert.show("Conversion fails");
-			}
-
-
 			private function info(point:LatLng):void
 			{
-				map.openInfoWindow(point, new InfoWindowOptions({title: "搜索结果：", content: placeInfo}));
+				map.openInfoWindow(point, new InfoWindowOptions({title: "位置：", content: placeInfo}));
 			}
-			
-			
-			
-			
-			
-			
-			
-			
+
+			// //search & mark
+
+
+
+
+
+
 			private function resizeHandler(event:Event):void //全屏变化处理
 			{
-				panel.y = map.height + 10;	
+				panel.y=map.height + 10;
 			}
-			
-			
-			
-			
-			
 		]]>
 	</fx:Script>
+
+
 
 
 
@@ -144,10 +167,13 @@
 			  sensor="true"/>
 
 	<s:HGroup id="panel">
-		<s:TextInput id="searchInput" width="400" /><!--  restrict="0-9\a-z\^{'[\u4e00-\u9fa5]'}" -->
-		<s:Button id="searchBtn" label="search" />
+		<s:TextInput id="searchInput"
+					 width="400"/>
+		<!--  restrict="0-9\a-z\^{'[\u4e00-\u9fa5]'}" -->
+		<s:Button id="searchBtn"
+				  label="search"/>
 	</s:HGroup>
-	
+
 
 
 
