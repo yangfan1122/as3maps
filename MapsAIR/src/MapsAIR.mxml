@@ -3,7 +3,7 @@
 					   xmlns:s="library://ns.adobe.com/flex/spark"
 					   xmlns:mx="library://ns.adobe.com/flex/mx"
 					   width="640"
-					   height="480">
+					   height="480" creationComplete="init()">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
 	</fx:Declarations>
@@ -11,40 +11,144 @@
 	<fx:Script>
 		<![CDATA[
 			//http://code.google.com/intl/zh-CN/apis/maps/documentation/flash/tutorial-flexbuilder.html
+			//地址转换经纬度http://www.ibm.com/developerworks/cn/web/wa-lo-flexgoogle/
 
+			import com.google.maps.InfoWindowOptions;
 			import com.google.maps.LatLng;
 			import com.google.maps.Map;
 			import com.google.maps.MapEvent;
 			import com.google.maps.MapType;
 			import com.google.maps.controls.*;
+			import com.google.maps.overlays.*;
+			import com.google.maps.services.*;
+			
+			import mx.controls.Alert;
+
+			//private var searchPlace:String="回龙观";//for test
+			private var placeInfo:String="";
 
 
+			private function init():void
+			{
+				panel.x = 10;
+				panel.y = map.height + 10;
+				
+				searchBtn.addEventListener(MouseEvent.CLICK, searchHandler);
+				
+				this.nativeWindow.addEventListener(Event.RESIZE, resizeHandler);//监听全屏变化
+			}
+			
 			private function onMapReady(event:Event):void
 			{
-				//this.map.setCenter(new LatLng(40.736072, -73.992062), 14, MapType.NORMAL_MAP_TYPE);//new york
+				//this.map.setCenter(new LatLng(40.736072, -73.992062), 14, MapType.NORMAL_MAP_TYPE);//new york 
 				//this.map.setCenter(new LatLng(31, 121), 9, MapType.NORMAL_MAP_TYPE); //shanghai
 				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing
+				//map.openInfoWindow(map.getCenter(), new InfoWindowOptions({title: "Hello", content: "World"}));
 
 				map.addControl(new PositionControl(new PositionControlOptions())); //显示一个方向的按钮,用来移动地图 
 				map.addControl(new OverviewMapControl(new OverviewMapControlOptions())); //显示一个地图的缩略图 
 				map.addControl(new ZoomControl(new ZoomControlOptions())); //显示一个刻度条用来放大和缩小地图 
-				map.addControl(new MapTypeControl(new MapTypeControlOptions())); //在地图上显示地图的4种类型，可以随意切换 
+				map.addControl(new MapTypeControl(new MapTypeControlOptions())); //在地图上显示地图的4种类型， 可以随意切换 
 
 				map.enableScrollWheelZoom();
 				map.enableContinuousZoom();
 			}
+
+			private function searchHandler(event:MouseEvent):void
+			{
+				var cgo:ClientGeocoderOptions=new ClientGeocoderOptions({language: 'zh', countryCode: 'CN'});
+				
+				//先创建ClientGeocoder实例
+				var geocoder:ClientGeocoder=new ClientGeocoder(cgo);
+				//注册地址转换成功事件的listener
+				geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocodingSuccess);
+				//注册地址转换失败事件的listener
+				geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocodingFailure);
+				//发送地址转换请求
+				geocoder.geocode(searchInput.text);
+				
+				
+			}
+
+
+
+			private function geocodingSuccess(event:GeocodingEvent):void
+			{
+				trace(event.response.placemarks[0].address);
+				placeInfo=event.response.placemarks[0].address;
+				var placemarks:Array=event.response.placemarks;
+				if (placemarks.length > 0)
+				{
+					//得到返回数组的第一个对象，也就是转换后的经纬度数据
+					var placemark:Object=placemarks[0];
+					//设置地图中心坐标
+					map.setCenter(placemark.point);
+					createMarker(placemark.point, event.response.placemarks[0].address);
+				}
+			}
+
+			private function createMarker(point:LatLng, city:String):void
+			{
+				//创建 marker 对象,draggable: true 表示可以在地图上拖动
+				//var marker:Marker=new Marker(point, new MarkerOptions({draggable: true}));
+				/*
+				   var customContent:MyInfoWindowSprite = new MyInfoWindowSprite  ;
+				   customContent.addEventListener("close",function(event:Event):void {
+				   marker.closeInfoWindow();
+				   });
+				 */
+				//map.addOverlay(marker);
+
+				info(point);
+			}
+
+			private function geocodingFailure(event:GeocodingEvent):void
+			{
+				Alert.show("Conversion fails");
+			}
+
+
+			private function info(point:LatLng):void
+			{
+				map.openInfoWindow(point, new InfoWindowOptions({title: "搜索结果：", content: placeInfo}));
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+			private function resizeHandler(event:Event):void //全屏变化处理
+			{
+				panel.y = map.height + 10;	
+			}
+			
+			
+			
+			
+			
 		]]>
 	</fx:Script>
+
 
 
 	<maps:Map xmlns:maps="com.google.maps.*"
 			  id="map"
 			  mapevent_mapready="onMapReady(event)"
 			  width="100%"
-			  height="100%"
+			  height="90%"
 			  key="your_api_key"
 			  url="http://code.google.com/apis/maps/"
 			  sensor="true"/>
+
+	<s:HGroup id="panel">
+		<s:TextInput id="searchInput" width="400" /><!--  restrict="0-9\a-z\^{'[\u4e00-\u9fa5]'}" -->
+		<s:Button id="searchBtn" label="search" />
+	</s:HGroup>
+	
+
 
 
 
