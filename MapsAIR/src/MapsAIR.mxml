@@ -3,8 +3,7 @@
 					   xmlns:s="library://ns.adobe.com/flex/spark"
 					   xmlns:mx="library://ns.adobe.com/flex/mx"
 					   width="640"
-					   height="480"
-					   creationComplete="init()">
+					   height="480">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
 		<s:WebService result="ip_resultHandler(event)"
@@ -39,23 +38,13 @@
 			private var cgo:ClientGeocoderOptions=new ClientGeocoderOptions({language: 'zh', countryCode: 'CN'});
 			private var geocoder:ClientGeocoder; //先创建ClientGeocoder实例
 
-			private function init():void
-			{
-				panel.x=10;
-				panel.y=map.height + 10;
-
-				searchBtn.addEventListener(MouseEvent.CLICK, searchHandler); //搜索
-				this.nativeWindow.addEventListener(Event.RESIZE, resizeHandler); //监听全屏变化
-				
-				ip.getGeoIPContext();//ip转换地点
-			}
 
 			private function onMapReady(event:Event):void //设置界面
 			{
-				geocoder = new ClientGeocoder(cgo);
+				geocoder=new ClientGeocoder(cgo);
 				geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocodingSuccess);
 				geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocodingFailure);
-				
+
 				//(40.736072, -73.992062)new york 
 				//(31, 121)shanghai
 				//map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing 经纬度定位
@@ -67,9 +56,22 @@
 
 				map.enableScrollWheelZoom();
 				map.enableContinuousZoom();
+
+				init();
 			}
 
+			private function init():void
+			{
+				panel.visible=true;
+				panel.x=10;
+				panel.y=map.height + 10;
 
+				searchBtn.addEventListener(MouseEvent.CLICK, searchHandler); //搜索
+				this.nativeWindow.addEventListener(Event.RESIZE, resizeHandler); //监听全屏变化
+
+				ip.getGeoIPContext(); //ip转换地点
+				label.text="Loading...";
+			}
 
 			//ip
 			private function ip_resultHandler(event:ResultEvent):void
@@ -78,12 +80,14 @@
 				//trace("here = "+here);//here = 北京市 联通ADSL
 				geocoder.geocode(here);
 				map.setZoom(12);
+				label.text="";
 			}
 
 			private function ip_faultHandler(event:FaultEvent):void
 			{
-				Alert.show("获取地理位置失败");
+				Alert.show("获取地理位置失败", "错误");
 				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing 经纬度定位
+				label.text="";
 			}
 
 			// //ip
@@ -93,9 +97,9 @@
 			private function searchHandler(event:MouseEvent):void //搜索
 			{
 				/*
-				geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocodingSuccess);
-				geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocodingFailure);
-				*/
+				   geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocodingSuccess);
+				   geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocodingFailure);
+				 */
 				geocoder.geocode(searchInput.text); //发送地址转换请求
 			}
 
@@ -116,7 +120,7 @@
 
 			private function geocodingFailure(event:GeocodingEvent):void
 			{
-				Alert.show("Conversion fails");
+				Alert.show("搜索失败", "错误");
 			}
 
 			private function createMarker(point:LatLng, city:String):void
@@ -166,12 +170,15 @@
 			  url="http://code.google.com/apis/maps/"
 			  sensor="true"/>
 
-	<s:HGroup id="panel">
+	<s:HGroup id="panel"
+			  verticalAlign="middle"
+			  visible="false">
 		<s:TextInput id="searchInput"
 					 width="400"/>
 		<!--  restrict="0-9\a-z\^{'[\u4e00-\u9fa5]'}" -->
 		<s:Button id="searchBtn"
 				  label="search"/>
+		<s:Label id="label"/>
 	</s:HGroup>
 
 
