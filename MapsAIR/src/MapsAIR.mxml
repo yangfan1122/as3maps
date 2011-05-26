@@ -47,7 +47,7 @@
 				searchBtn.addEventListener(MouseEvent.CLICK, searchHandler); //搜索
 				this.nativeWindow.addEventListener(Event.RESIZE, resizeHandler); //监听全屏变化
 				
-				ip.getGeoIPContext();
+				ip.getGeoIPContext();//ip转换地点
 			}
 
 			private function onMapReady(event:Event):void //设置界面
