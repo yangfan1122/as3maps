@@ -4,26 +4,45 @@
 			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<s:WebService result="ip_resultHandler(event)"
+					  fault="ip_faultHandler(event)"
+					  wsdl="http://webservice.webxml.com.cn/WebServices/IpAddressSearchWebService.asmx?wsdl"
+					  id="ip"/>
 	</fx:Declarations>
 	
 	<fx:Script>
 		<![CDATA[
 			
 			//http://code.google.com/intl/zh-CN/apis/maps/documentation/flash/tutorial-flexbuilder.html
-			
+			import com.google.maps.InfoWindowOptions;
 			import com.google.maps.LatLng;
 			import com.google.maps.Map;
 			import com.google.maps.MapEvent;
 			import com.google.maps.MapType;
 			import com.google.maps.controls.*;
+			import com.google.maps.overlays.*;
+			import com.google.maps.services.*;
 			
+			import flash.external.ExternalInterface;
+			
+			import mx.controls.Alert;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			private var placeInfo:String="";
+			private var here:String;
+			private var cgo:ClientGeocoderOptions=new ClientGeocoderOptions({language: 'zh', countryCode: 'CN'});
+			private var geocoder:ClientGeocoder; //先创建ClientGeocoder实例
+			private var clientIP:String;
 			
 			private function onMapReady(event:Event):void
 			{
-				//this.map.setCenter(new LatLng(40.736072, -73.992062), 14, MapType.NORMAL_MAP_TYPE);//new york
-				//this.map.setCenter(new LatLng(31, 121), 9, MapType.NORMAL_MAP_TYPE); //shanghai
-				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing
+				geocoder=new ClientGeocoder(cgo);
+				geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocodingSuccess);
+				geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocodingFailure);
+
 				
+				//map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing
 				map.addControl(new PositionControl(new PositionControlOptions())); //显示一个方向的按钮,用来移动地图 
 				map.addControl(new OverviewMapControl(new OverviewMapControlOptions())); //显示一个地图的缩略图 
 				map.addControl(new ZoomControl(new ZoomControlOptions())); //显示一个刻度条用来放大和缩小地图 
@@ -31,19 +50,143 @@
 				
 				map.enableScrollWheelZoom();
 				map.enableContinuousZoom();
+				
+				
+				panel.visible=true;
+				panel.x=10;
+				panel.y=map.height + 10;
+				
+				searchBtn.addEventListener(MouseEvent.CLICK, searchHandler); //搜索			
+				
+				
+				callIP();
 			}
+			
+			//get ip
+			//从页面获得客户端ip
+			private function callIP():void
+			{
+				ExternalInterface.addCallback("setIP", setIP);
+				ExternalInterface.call("callIP");
+			}
+			private function setIP(_ip:String):void
+			{
+				if(_ip != null && _ip != "")
+				{
+					clientIP = _ip;
+					setPosition();
+				}
+				else
+				{
+					Alert.show("初始化地理位置失败，默认北京！", "错误");
+					clientIP = "127.0.0.1";
+					map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing
+				}
+			}		
+			// //get ip
+			
+			
+			//ip
+			private function setPosition():void
+			{
+				//ip.getGeoIPContext(); //ip转换地点。该方法停用了。
+				ip.getCountryCityByIp(clientIP);//根据客户端ip获得位置信息
+				label.text="Loading...";
+			}
+			
+			private function ip_resultHandler(event:ResultEvent):void
+			{
+				here=event.result[1];
+				//trace("here = "+here);//here = 北京市 联通ADSL
+				geocoder.geocode(here);
+				map.setZoom(12);
+				label.text="";			
+			}
+			
+			private function ip_faultHandler(event:FaultEvent):void
+			{
+				Alert.show("获取地理位置失败！", "错误");
+				
+				/*
+				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing 经纬度定位
+				label.text="";
+				*/
+			}
+			
+			// //ip
+			
+			
+			
+			//search & mark
+			private function searchHandler(event:MouseEvent):void //搜索
+			{
+				geocoder.geocode(searchInput.text); //发送地址转换请求
+			}
+			
+			private function geocodingSuccess(event:GeocodingEvent):void
+			{
+				placeInfo=event.response.placemarks[0].address;
+				var placemarks:Array=event.response.placemarks;
+				if (placemarks.length > 0)
+				{
+					//得到返回数组的第一个对象，也就是转换后的经纬度数据
+					var placemark:Object=placemarks[0];
+					//设置地图中心坐标
+					map.setCenter(placemark.point);
+					createMarker(placemark.point, event.response.placemarks[0].address);
+				}
+			}
+			
+			private function geocodingFailure(event:GeocodingEvent):void
+			{
+				Alert.show("搜索失败！", "错误");
+			}
+			
+			private function createMarker(point:LatLng, city:String):void
+			{
+				//创建 marker 对象,draggable: true 表示可以在地图上拖动
+				//var marker:Marker=new Marker(point, new MarkerOptions({draggable: true}));
+				/*
+				var customContent:MyInfoWindowSprite = new MyInfoWindowSprite  ;
+				customContent.addEventListener("close",function(event:Event):void {
+				marker.closeInfoWindow();
+				});
+				*/
+				//map.addOverlay(marker);
+				
+				info(point);
+			}
+			
+			private function info(point:LatLng):void
+			{
+				map.openInfoWindow(point, new InfoWindowOptions({title: "位置：", content: placeInfo}));
+			}
+			
+			// //search & mark
 		]]>
 	</fx:Script>
 	
-	
+	<!--
+	http://test1.myyule.com.cn:8089/的key：
+	ABQIAAAArMskXbiWHQ1rQlpK9twPWBQ_15XCSNWRGl3YP4mTtVd2iul6wBT_qa_uCi80UROH_W-_y84egWc2HQ
+	-->
 	<maps:Map xmlns:maps="com.google.maps.*"
 			  id="map"
 			  mapevent_mapready="onMapReady(event)"
 			  width="100%"
-			  height="100%"
-			  key="your_api_key"
+			  height="90%"
+			  key="ABQIAAAArMskXbiWHQ1rQlpK9twPWBQ_15XCSNWRGl3YP4mTtVd2iul6wBT_qa_uCi80UROH_W-_y84egWc2HQ"
 			  sensor="true"/>
 	
-	
+	<s:HGroup id="panel"
+			  verticalAlign="middle"
+			  visible="false">
+		<s:TextInput id="searchInput"
+					 width="400"/>
+		<!--  restrict="0-9\a-z\^{'[\u4e00-\u9fa5]'}" -->
+		<s:Button id="searchBtn"
+				  label="search"/>
+		<s:Label id="label"/>
+	</s:HGroup>
 	
 </s:Application>

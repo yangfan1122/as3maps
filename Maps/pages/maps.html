@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>maps</title>
+
+</head>
+<body style="background-color:#cce8cf;">
+
+
+<!-- flashContent -->
+<script>
+function callIP()
+{
+	thisMovie("mapsID").setIP("");//客户端ip   60.195.252.20
+}
+
+function thisMovie(movieName)
+{
+    return navigator.appName.indexOf("Microsoft") != -1 ? window[movieName] : document[movieName];
+}
+</script>
+
+<script type="text/javascript" src="swfobject_v2.2.js"></script>
+<script type="text/javascript">
+<!-- For version detection, set to min. required Flash Player version, or 0 (or 0.0.0), for no version detection. -->
+var swfVersionStr = "10.0.0";
+<!-- To use express install, set to playerProductInstall.swf, otherwise the empty string. -->
+var xiSwfUrlStr = "playerProductInstall.swf";
+var flashvars = {};//
+var params = {};
+params.quality = "high";
+params.bgcolor = "#ffffff";
+params.allowscriptaccess = "always";
+params.allowfullscreen = "true";
+var attributes = {};
+attributes.id = "mapsID";//swf id
+attributes.name = "mapsNAME";//swf name
+attributes.align = "middle";
+var rand_date = new Date();
+var rand_time = rand_date.getTime();
+swfobject.embedSWF("../bin-debug/Maps.swf?"+rand_time, "flashContent", "955", "600", swfVersionStr, xiSwfUrlStr, flashvars, params, attributes);
+<!-- JavaScript enabled so display the flashContent div in case it is not replaced with a swf object. -->
+swfobject.createCSS("#flashContent", "display:block;text-align:left;");
+</script>
+
+<div id="flashContent">
+  <p> To view this page ensure that Adobe Flash Player version 
+    10.0.0 or greater is installed. </p>
+  <script type="text/javascript"> 
+	var pageHost = ((document.location.protocol == "https:") ? "https://" :"http://");
+	document.write("<a href='http://www.adobe.com/go/getflashplayer'><img src='"+ pageHost + "www.adobe.com/images/shared/download_buttons/get_flash_player.gif' border='0' alt='Get Adobe Flash player' /></a>" );
+  </script>
+</div>
+
+<!-- //flashContent -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- for test -->
+<script language="javascript">
+function test(str)
+{
+	document.getElementById("testdiv").innerHTML+=str+"<br />------------------------------<br />"; 
+}
+function test1(str)
+{
+	document.getElementById("testdiv").innerHTML=str; 
+}
+function clearTest()
+{
+	document.getElementById("testdiv").innerHTML="";
+}
+</script>
+<br /><br />
+<input type="button" value="clear output" onclick="clearTest()" />
+<br />
+<div id="testdiv" style="margin:10px 0px 10px 0px; font-family:Arial, Helvetica, sans-serif;"></div>
+<!-- //for test -->
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
