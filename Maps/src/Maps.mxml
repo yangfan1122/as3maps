@@ -140,6 +140,7 @@
 			private function geocodingFailure(event:GeocodingEvent):void
 			{
 				Alert.show("搜索失败！", "错误");
+				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing
 			}
 			
 			private function createMarker(point:LatLng, city:String):void
