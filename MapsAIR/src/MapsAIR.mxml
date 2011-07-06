@@ -27,6 +27,8 @@
 			import com.google.maps.controls.*;
 			import com.google.maps.overlays.*;
 			import com.google.maps.services.*;
+			
+			import roy.net.LocalIPHandler;
 
 			import mx.controls.Alert;
 			import mx.rpc.events.FaultEvent;
@@ -69,7 +71,9 @@
 				searchBtn.addEventListener(MouseEvent.CLICK, searchHandler); //搜索
 				this.nativeWindow.addEventListener(Event.RESIZE, resizeHandler); //监听全屏变化
 
-				ip.getGeoIPContext(); //ip转换地点
+				//ip.getGeoIPContext(); //ip转换地点。这方法被停了
+				//LocalIPHandler.getLocalIPHandler()[0]:本地ip
+				ip.getCountryCityByIp(LocalIPHandler.getLocalIPHandler()[0]);
 				label.text="Loading...";
 			}
 
@@ -105,7 +109,6 @@
 
 			private function geocodingSuccess(event:GeocodingEvent):void
 			{
-				trace(event.response.placemarks[0].address);
 				placeInfo=event.response.placemarks[0].address;
 				var placemarks:Array=event.response.placemarks;
 				if (placemarks.length > 0)
@@ -121,6 +124,7 @@
 			private function geocodingFailure(event:GeocodingEvent):void
 			{
 				Alert.show("搜索失败", "错误");
+				geocoder.geocode("北京市");
 			}
 
 			private function createMarker(point:LatLng, city:String):void
