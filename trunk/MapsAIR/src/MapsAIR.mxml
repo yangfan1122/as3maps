@@ -109,7 +109,7 @@
 				}
 				else //ip请求成功，WebService失败
 				{
-					Alert.show("获取地理位置失败 "+event.type, "错误");
+					Alert.show("获取地理位置失败", "错误");
 				}
 				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing 经纬度定位
 				label.text="";
