@@ -35,6 +35,8 @@
 			private var geocoder:ClientGeocoder; //先创建ClientGeocoder实例
 			private var clientIP:String;
 			
+			private var requestInfo:RequestInfo;
+			
 			private function onMapReady(event:Event):void
 			{
 				geocoder=new ClientGeocoder(cgo);
@@ -71,22 +73,37 @@
 			}
 			private function setIP(_ip:String):void
 			{
-				if(_ip != null && _ip != "")
+				if(_ip != null && _ip != "") //从页面传递ip
 				{
 					clientIP = _ip;
 					setPosition();
 				}
-				else
+				else //未从页面传递ip
 				{
-					Alert.show("初始化地理位置失败，默认北京！", "错误");
-					clientIP = "127.0.0.1";
-					map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing
+					//页面未传进ip时，向ip.php请求ip
+					requestInfo = new RequestInfo("http://test1.myyule.com.cn:8089/template/yf/test/googlemapsflashapi/pages/ip.php");
+					requestInfo.addEventListener("LOAD_IP_SUCCESS", ipHandler);
+					requestInfo.addEventListener("LOAD_IP_ERROR", ipErrorHandler);
 				}
 			}		
 			// //get ip
 			
 			
 			//ip
+			private function ipHandler(event:CustomizeEvent):void
+			{
+				requestInfo.removeEventListener("LOAD_IP_SUCCESS", ipHandler);
+				
+				//ip.getGeoIPContext(); //ip转换地点。该方法停用了。
+				ip.getCountryCityByIp(event.customizeStr);//根据客户端ip获得位置信息
+				label.text="Loading...";
+			}
+			private function ipErrorHandler(event:Event):void
+			{
+				ip_faultHandler(new FaultEvent("ip_error"));
+			}
+			
+			
 			private function setPosition():void
 			{
 				//ip.getGeoIPContext(); //ip转换地点。该方法停用了。
@@ -105,12 +122,16 @@
 			
 			private function ip_faultHandler(event:FaultEvent):void
 			{
-				Alert.show("获取地理位置失败！", "错误");
-				
-				/*
+				if(event.type == "ip_error") //ip请求失败
+				{
+					Alert.show("获取ip失败", "错误");
+				}
+				else //ip请求成功，WebService失败
+				{
+					Alert.show("获取地理位置失败", "错误");
+				}
 				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing 经纬度定位
 				label.text="";
-				*/
 			}
 			
 			// //ip
