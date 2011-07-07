@@ -28,17 +28,17 @@
 			import com.google.maps.overlays.*;
 			import com.google.maps.services.*;
 			
-			import roy.net.LocalIPHandler;
-
 			import mx.controls.Alert;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
-
+			
 			//private var searchPlace:String="回龙观";//for test
 			private var placeInfo:String="";
 			private var here:String;
 			private var cgo:ClientGeocoderOptions=new ClientGeocoderOptions({language: 'zh', countryCode: 'CN'});
 			private var geocoder:ClientGeocoder; //先创建ClientGeocoder实例
+			
+			private var requestInfo:RequestInfo;
 
 
 			private function onMapReady(event:Event):void //设置界面
@@ -70,14 +70,28 @@
 
 				searchBtn.addEventListener(MouseEvent.CLICK, searchHandler); //搜索
 				this.nativeWindow.addEventListener(Event.RESIZE, resizeHandler); //监听全屏变化
-
-				//ip.getGeoIPContext(); //ip转换地点。这方法被停了
-				//LocalIPHandler.getLocalIPHandler()[0]:本地ip
-				ip.getCountryCityByIp(LocalIPHandler.getLocalIPHandler()[0]);
-				label.text="Loading...";
+				
+				requestInfo = new RequestInfo("http://test1.myyule.com.cn:8089/template/yf/test/googlemapsflashapi/pages/ip.php");
+				requestInfo.addEventListener("LOAD_IP_SUCCESS", ipHandler);
+				requestInfo.addEventListener("LOAD_IP_ERROR", ipErrorHandler);
 			}
 
 			//ip
+			private function ipHandler(event:CustomizeEvent):void
+			{
+				requestInfo.removeEventListener("LOAD_IP_SUCCESS", ipHandler);
+				
+				//ip.getGeoIPContext(); //ip转换地点。这方法被停了
+				//WebService将ip转换成地理位置
+				ip.getCountryCityByIp(event.customizeStr);
+				label.text="Loading...";
+			}
+			private function ipErrorHandler(event:Event):void
+			{
+				ip_faultHandler(new FaultEvent("ip_error"));
+			}
+			
+			
 			private function ip_resultHandler(event:ResultEvent):void
 			{
 				here=event.result[1];
@@ -89,9 +103,17 @@
 
 			private function ip_faultHandler(event:FaultEvent):void
 			{
-				Alert.show("获取地理位置失败", "错误");
+				if(event.type == "ip_error") //ip请求失败
+				{
+					Alert.show("获取ip失败", "错误");
+				}
+				else //ip请求成功，WebService失败
+				{
+					Alert.show("获取地理位置失败 "+event.type, "错误");
+				}
 				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing 经纬度定位
 				label.text="";
+				
 			}
 
 			// //ip
