@@ -194,7 +194,7 @@
 			  height="90%"
 			  key="your_api_key"
 			  url="http://code.google.com/apis/maps/"
-			  sensor="true"/>
+			  sensor="true" language="zh_CN"/>
 
 	<s:HGroup id="panel"
 			  verticalAlign="middle"
