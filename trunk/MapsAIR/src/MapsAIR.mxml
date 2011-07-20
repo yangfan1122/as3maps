@@ -103,6 +103,7 @@
 				geocoder.geocode(here);
 				map.setZoom(12);
 				label.text="";
+				searchBtn.enabled = true;
 			}
 
 			private function ip_faultHandler(event:FaultEvent):void
@@ -117,6 +118,7 @@
 				}
 				map.setCenter(new LatLng(39.93, 116.4), 12, MapType.NORMAL_MAP_TYPE); //beijing 经纬度定位
 				label.text="";
+				searchBtn.enabled = true;
 				
 			}
 
@@ -127,19 +129,26 @@
 			
 			private function searchHandler(event:MouseEvent):void //搜索
 			{
-				/*
-				   geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocodingSuccess);
-				   geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocodingFailure);
-				 */
 				label.text = "";
-				geocoder.geocode(searchInput.text); //发送地址转换请求
+				searchResultArr.source = [];
+				ddl.enabled = false;
+				
+				if(searchInput.text!="" && searchInput.text!=null)
+				{
+					geocoder.geocode(searchInput.text); //发送地址转换请求
+				}
+				else
+				{
+					label.text = "你搜哪啊？";
+				}
 			}
 
 			private function geocodingSuccess(event:GeocodingEvent):void
 			{
 				//combobox
+				ddl.enabled = true;
 				searchResultArr.source=event.response.placemarks;
-				cb.selectedIndex=0;
+				ddl.selectedIndex=0;
 				
 				//定位第一个搜索结果
 				placeInfo=event.response.placemarks[0].address;
@@ -162,30 +171,20 @@
 			}
 			
 			/**
-			 * 响应ComboBox
-			 * @param	input
-			 */
-			private function myLabelToItemFunction(input:String):*
-			{
-				//Returns object that matches items in dataProvider
-				return {ingredient: input, category: "mystery"};
-			}
-			
-			/**
 			 * 响应ComboBox的close事件
 			 * @param	event
 			 */
 			private function cbCloseHandler(event:Event):void
 			{
-				placeInfo=searchResultArr[cb.selectedIndex].address; //地址
+				placeInfo=searchResultArr[ddl.selectedIndex].address; //地址
 				var placemarks:Array=searchResultArr.source;
 				if (placemarks.length > 0)
 				{
 					//得到返回数组的第一个对象，也就是转换后的经纬度数据
-					var placemark:Object=placemarks[cb.selectedIndex];
+					var placemark:Object=placemarks[ddl.selectedIndex];
 					//设置地图中心坐标
 					map.setCenter(placemark.point);
-					createMarker(placemark.point, placemarks[cb.selectedIndex].address);
+					createMarker(placemark.point, placemarks[ddl.selectedIndex].address);
 				}
 			}
 			
@@ -244,13 +243,13 @@
 					 width="200"/>
 		<!--  restrict="0-9\a-z\^{'[\u4e00-\u9fa5]'}" -->
 		<s:Button id="searchBtn"
+				  enabled="false"
 				  label="search"/>
 		<s:Label id="label"/>
 		<s:Label text=" result:" />
-		<s:ComboBox id="cb"
+		<s:DropDownList id="ddl"
 					dataProvider="{searchResultArr}"
 					width="350"
-					labelToItemFunction="{myLabelToItemFunction}"
 					selectedIndex="0"
 					labelField="address"
 					close="cbCloseHandler(event)"/>
