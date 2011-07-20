@@ -2,8 +2,8 @@
 <s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
 					   xmlns:s="library://ns.adobe.com/flex/spark"
 					   xmlns:mx="library://ns.adobe.com/flex/mx"
-					   width="640"
-					   height="480">
+					   width="800"
+					   height="600">
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
 		<s:WebService result="ip_resultHandler(event)"
@@ -28,6 +28,7 @@
 			import com.google.maps.overlays.*;
 			import com.google.maps.services.*;
 			
+			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
@@ -39,6 +40,9 @@
 			private var geocoder:ClientGeocoder; //先创建ClientGeocoder实例
 			
 			private var requestInfo:RequestInfo;
+			
+			[Bindable]
+			private var searchResultArr:ArrayCollection=new ArrayCollection(); //存储搜索结果，为下拉菜单提供数据
 
 
 			private function onMapReady(event:Event):void //设置界面
@@ -131,6 +135,11 @@
 
 			private function geocodingSuccess(event:GeocodingEvent):void
 			{
+				//combobox
+				searchResultArr.source=event.response.placemarks;
+				cb.selectedIndex=0;
+				
+				//定位第一个搜索结果
 				placeInfo=event.response.placemarks[0].address;
 				var placemarks:Array=event.response.placemarks;
 				if (placemarks.length > 0)
@@ -148,6 +157,35 @@
 				Alert.show("搜索失败", "错误");
 				geocoder.geocode("北京市");
 			}
+			
+			/**
+			 * 响应ComboBox
+			 * @param	input
+			 */
+			private function myLabelToItemFunction(input:String):*
+			{
+				//Returns object that matches items in dataProvider
+				return {ingredient: input, category: "mystery"};
+			}
+			
+			/**
+			 * 响应ComboBox的close事件
+			 * @param	event
+			 */
+			private function cbCloseHandler(event:Event):void
+			{
+				placeInfo=searchResultArr[cb.selectedIndex].address; //地址
+				var placemarks:Array=searchResultArr.source;
+				if (placemarks.length > 0)
+				{
+					//得到返回数组的第一个对象，也就是转换后的经纬度数据
+					var placemark:Object=placemarks[cb.selectedIndex];
+					//设置地图中心坐标
+					map.setCenter(placemark.point);
+					createMarker(placemark.point, placemarks[cb.selectedIndex].address);
+				}
+			}
+			
 
 			private function createMarker(point:LatLng, city:String):void
 			{
@@ -200,10 +238,18 @@
 			  verticalAlign="middle"
 			  visible="false">
 		<s:TextInput id="searchInput"
-					 width="400"/>
+					 width="200"/>
 		<!--  restrict="0-9\a-z\^{'[\u4e00-\u9fa5]'}" -->
 		<s:Button id="searchBtn"
 				  label="search"/>
+		<s:Label text=" result:" />
+		<s:ComboBox id="cb"
+					dataProvider="{searchResultArr}"
+					width="350"
+					labelToItemFunction="{myLabelToItemFunction}"
+					selectedIndex="0"
+					labelField="address"
+					close="cbCloseHandler(event)"/>
 		<s:Label id="label"/>
 	</s:HGroup>
 
