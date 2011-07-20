@@ -124,12 +124,14 @@
 
 
 			//search & mark
+			
 			private function searchHandler(event:MouseEvent):void //搜索
 			{
 				/*
 				   geocoder.addEventListener(GeocodingEvent.GEOCODING_SUCCESS, geocodingSuccess);
 				   geocoder.addEventListener(GeocodingEvent.GEOCODING_FAILURE, geocodingFailure);
 				 */
+				label.text = "";
 				geocoder.geocode(searchInput.text); //发送地址转换请求
 			}
 
@@ -154,7 +156,8 @@
 
 			private function geocodingFailure(event:GeocodingEvent):void
 			{
-				Alert.show("搜索失败", "错误");
+				//Alert.show("搜索失败!", "错误");
+				label.text = "搜索失败!";
 				geocoder.geocode("北京市");
 			}
 			
@@ -242,6 +245,7 @@
 		<!--  restrict="0-9\a-z\^{'[\u4e00-\u9fa5]'}" -->
 		<s:Button id="searchBtn"
 				  label="search"/>
+		<s:Label id="label"/>
 		<s:Label text=" result:" />
 		<s:ComboBox id="cb"
 					dataProvider="{searchResultArr}"
@@ -250,7 +254,7 @@
 					selectedIndex="0"
 					labelField="address"
 					close="cbCloseHandler(event)"/>
-		<s:Label id="label"/>
+		
 	</s:HGroup>
 
 
