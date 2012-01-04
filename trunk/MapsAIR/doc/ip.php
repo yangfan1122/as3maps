@@ -10,5 +10,6 @@ $showtime=date("Y-m-d H:i:s");//得到日期
 $cjjer_handle = fopen ("ip.txt","w+");//读文件
 fwrite ($cjjer_handle,$content."日期:".$showtime."访问者ip:".$ip."\n");
 fclose ($cjjer_handle);
+echo "##**";
 echo $ip;
 ?>
