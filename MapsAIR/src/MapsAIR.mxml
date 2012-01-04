@@ -76,7 +76,9 @@
 				searchBtn.addEventListener(MouseEvent.CLICK, searchHandler); //搜索
 				this.nativeWindow.addEventListener(Event.RESIZE, resizeHandler); //监听全屏变化
 				
-				requestInfo = new RequestInfo("http://test1.myyule.com.cn:8089/template/yf/test/googlemapsflashapi/pages/ip.php");
+				//http://webstoreair.sinaapp.com/mapsair/ip.php
+				//http://test1.myyule.com.cn:8089/template/yf/test/googlemapsflashapi/pages/ip.php
+				requestInfo = new RequestInfo("http://webstoreair.sinaapp.com/mapsair/ip.php");
 				requestInfo.addEventListener("LOAD_IP_SUCCESS", ipHandler);
 				requestInfo.addEventListener("LOAD_IP_ERROR", ipErrorHandler);
 			}
@@ -88,7 +90,11 @@
 				
 				//ip.getGeoIPContext(); //ip转换地点。这方法被停了
 				//WebService将ip转换成地理位置
-				ip.getCountryCityByIp(event.customizeStr);
+				
+				var tempArr:Array = new Array();//sae在ip.php上有其他输出，用“##**”隔开，只取后面的ip。
+				tempArr = event.customizeStr.split("##**");
+				
+				ip.getCountryCityByIp(tempArr[1]);
 				label.text="Loading...";
 			}
 			private function ipErrorHandler(event:Event):void
