@@ -88,7 +88,11 @@
 				else //未从页面传递ip
 				{
 					//页面未传进ip时，向ip.php请求ip
-					requestInfo=new RequestInfo("http://test1.myyule.com.cn:8089/template/yf/test/googlemapsflashapi/pages/ip.php");
+					
+					//http://webstoreair.sinaapp.com/maps/ip.php
+					//http://test1.myyule.com.cn:8089/template/yf/test/googlemapsflashapi/pages/ip.php
+					
+					requestInfo=new RequestInfo("http://webstoreair.sinaapp.com/maps/ip.php");
 					requestInfo.addEventListener("LOAD_IP_SUCCESS", ipHandler);
 					requestInfo.addEventListener("LOAD_IP_ERROR", ipErrorHandler);
 				}
@@ -103,7 +107,11 @@
 				requestInfo.removeEventListener("LOAD_IP_SUCCESS", ipHandler);
 
 				//ip.getGeoIPContext(); //ip转换地点。该方法停用了。
-				ip.getCountryCityByIp(event.customizeStr); //根据客户端ip获得位置信息
+				
+				var tempArr:Array = new Array();
+				tempArr = event.customizeStr.split("##**");
+				
+				ip.getCountryCityByIp(tempArr[1]); //根据客户端ip获得位置信息
 				label.text="Loading...";
 			}
 
@@ -239,12 +247,18 @@
 		 http://test1.myyule.com.cn:8089/的key：
 		 ABQIAAAArMskXbiWHQ1rQlpK9twPWBQ_15XCSNWRGl3YP4mTtVd2iul6wBT_qa_uCi80UROH_W-_y84egWc2HQ
 	-->
+	
+	<!--
+		http://webstoreair.sinaapp.com/的key：
+		ABQIAAAArMskXbiWHQ1rQlpK9twPWBSIE_sgaWTDDTvahvwWFt-9_5vZWRQEwtmDWFK4vquUY_Yt4df_uYprjw
+	-->
+	
 	<maps:Map xmlns:maps="com.google.maps.*"
 			  id="map"
 			  mapevent_mapready="onMapReady(event)"
 			  width="100%"
 			  height="90%"
-			  key="ABQIAAAArMskXbiWHQ1rQlpK9twPWBQ_15XCSNWRGl3YP4mTtVd2iul6wBT_qa_uCi80UROH_W-_y84egWc2HQ"
+			  key="ABQIAAAArMskXbiWHQ1rQlpK9twPWBSIE_sgaWTDDTvahvwWFt-9_5vZWRQEwtmDWFK4vquUY_Yt4df_uYprjw"
 			  sensor="true"/>
 
 	<s:HGroup id="panel"
